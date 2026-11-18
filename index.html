@@ -225,6 +225,9 @@
   @media (max-width:600px){.book-panel{padding:26px 20px}}
   .book-panel iframe{width:100%;height:700px;border:0;display:block;background:#fff}
   .book-panel.embed{padding:0}
+  .book-panel.cal{background:#fff;min-height:620px;overflow:auto;width:100%}
+  .book-panel.cal iframe{width:100%!important;min-width:100%}
+  .book-grid > *{min-width:0}
   form{display:grid;gap:18px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   @media (max-width:600px){.row2{grid-template-columns:1fr}}
@@ -537,15 +540,18 @@
 <script>
   /* ============================================================
      CONFIGURATION — the only part you need to edit
-     bookingUrl       : your Cal.com or Calendly booking page,
-                        e.g. "https://cal.com/grace/intro-call".
-                        It is embedded as a calendar with free slots.
+     calLink          : Cal.com event ("username/event-slug"). Shown as
+                        an inline calendar with free slots (official
+                        Cal.com embed). Takes priority over bookingUrl.
+     bookingUrl       : other booking page (e.g. Calendly), shown in an
+                        iframe. Only used if calLink is empty.
      email            : Grace's contact email. Used by the request
-                        form (only when there is no bookingUrl) and
+                        form (only when there is no calendar) and
                         in the footer.
      showTestimonials : keep false until the quotes are REAL.
      ============================================================ */
   const CONFIG = {
+    calLink: "gracefeng/15min",
     bookingUrl: "",
     email: "gracefeng0524@gmail.com",
     showTestimonials: false
@@ -572,7 +578,27 @@
   }
 
   const target = document.getElementById("booking-target");
-  if (CONFIG.bookingUrl) {
+  if (CONFIG.calLink) {
+    // Official Cal.com inline embed (calendar with free slots, visitor's time zone)
+    document.getElementById("book-hint").textContent = "Pick a free slot — the calendar shows it in your own time zone.";
+    target.classList.add("embed", "cal");
+    target.id = "booking-target";
+    (function (C, A, L) { let p = function (a, ar) { a.q.push(ar); }; let d = C.document; C.Cal = C.Cal || function () { let cal = C.Cal; let ar = arguments; if (!cal.loaded) { cal.ns = {}; cal.q = cal.q || []; d.head.appendChild(d.createElement("script")).src = A; cal.loaded = true; } if (ar[0] === L) { const api = function () { p(api, arguments); }; const namespace = ar[1]; api.q = api.q || []; if (typeof namespace === "string") { cal.ns[namespace] = cal.ns[namespace] || api; p(cal.ns[namespace], ar); p(cal, ["initNamespace", namespace]); } else p(cal, ar); return; } p(cal, ar); }; })(window, "https://app.cal.com/embed/embed.js", "init");
+    Cal("init", "intro", { origin: "https://app.cal.com" });
+    Cal.config = Cal.config || {};
+    Cal.config.forwardQueryParams = true;
+    Cal.ns.intro("inline", {
+      elementOrSelector: "#booking-target",
+      config: { layout: "month_view", useSlotsViewOnSmallScreen: "true", theme: "light" },
+      calLink: CONFIG.calLink
+    });
+    Cal.ns.intro("ui", {
+      theme: "light",
+      hideEventTypeDetails: false,
+      layout: "month_view",
+      cssVarsPerTheme: { light: { "cal-brand": "#9E2A20" } }
+    });
+  } else if (CONFIG.bookingUrl) {
     // Calendar with free slots (Cal.com or Calendly)
     let url = CONFIG.bookingUrl;
     if (url.includes("calendly.com")) url += (url.includes("?") ? "&" : "?") + "hide_gdpr_banner=1&background_color=f6f2ea&primary_color=9e2a20";
